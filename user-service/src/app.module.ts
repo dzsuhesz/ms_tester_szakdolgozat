@@ -3,6 +3,8 @@ import { UsersService } from "./users/users.service";
 import { AuthController } from "./auth/auth.controller";
 import { AuthService } from './auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
+import { UsersController } from "./users/users.controller";
+import { JwtAuthGuard } from "./auth/jwt-auth.guard";
 
 @Controller('health')
 export class HealthController {
@@ -24,7 +26,7 @@ export class HealthController {
             verifyOptions: { algorithms: ['HS256'] },
         }),
     ],
-    controllers: [HealthController, AuthController],
-    providers: [UsersService, AuthService],
+    controllers: [HealthController, AuthController, UsersController],
+    providers: [UsersService, AuthService, JwtAuthGuard],
 })
 export class AppModule {}

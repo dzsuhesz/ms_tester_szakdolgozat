@@ -1,0 +1,96 @@
+### 0. Health Check
+GET http://localhost:3001/health
+
+
+### Registration
+
+### 1. Sikeres regisztráció
+# @name register
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{ "email": "Elek@Gmail.com", "name": " Teszt Elek ", "password": "secret123" }
+
+### 2. Ugyanaz az email még egyszer (kisbetűvel) → 409
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{ "email": "elek@gmail.com", "name": "Másik", "password": "secret123" }
+
+### 3. Hibás adatok → 400
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{ "email": "nem-email", "name": "", "password": "123" }
+
+### 4. Becsempészett mező → 400
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{ "email": "b@example.com", "name": "B", "password": "secret123", "isAdmin": true }
+
+### 5. Hiányzó mezők → 400
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{ "email": "c@example.com" }
+
+
+### Login
+
+### 6. Sikeres login → 200 + token
+# @name login
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{ "email": "elek@gmail.com", "password": "secret123" }
+
+### 7. Login nagybetűs emaillel → 200
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{ "email": "ELEK@gmail.com", "password": "secret123" }
+
+### 8. Rossz jelszó → 401
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{ "email": "elek@gmail.com", "password": "rossz-jelszo" }
+
+### 9. Nem létező email → 401 (ugyanaz az üzenet, mint a 8.-nál)
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{ "email": "nincs@gmail.com", "password": "secret123" }
+
+### 10. Hiányzó jelszó → 400
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{ "email": "elek@gmail.com" }
+
+
+### User tests (sec)
+
+### 11. Saját adatok, érvényes tokennel → 200
+GET http://localhost:3001/users/{{register.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### 12. Token nélkül → 401
+GET http://localhost:3001/users/{{register.response.body.id}}
+
+### 13. Rossz séma (Basic a Bearer helyett) → 401
+GET http://localhost:3001/users/{{register.response.body.id}}
+Authorization: Basic {{login.response.body.accessToken}}
+
+### 14. Nem létező felhasználó → 404
+GET http://localhost:3001/users/nincs-ilyen
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### 15. Szemét token → 401
+GET http://localhost:3001/users/{{register.response.body.id}}
+Authorization: Bearer abc
+
+### 16. Hamisított token
+GET http://localhost:3001/users/{{register.response.body.id}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJlbWFpbCI6ImVsZWtAZ21haWwuY29tIiwiaWF0IjoxNzk1MzUyNTAxLCJleHAiOjE3OTUzNTYxMDF9.Coa9wsRsHIfsv1Sb5th4p3Qn3d5XTIGpDMdGMNmcZrQ
