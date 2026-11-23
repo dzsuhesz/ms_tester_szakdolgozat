@@ -1,0 +1,62 @@
+### ===== ELŐKÉSZÍTÉS (a User Service-en, 3001) =====
+
+### A. Reg
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{ "email": "elek@gmail.com", "name": "Teszt Elek", "password": "secret123" }
+
+### B. Login
+# @name login
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{ "email": "elek@gmail.com", "password": "secret123" }
+
+
+### ===== RENDELÉSEK (Order Service, 3002) =====
+
+### 1. Rendelés leadása → 201
+# @name order
+POST http://localhost:3002/orders
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+
+{ "item": "Kávéfőző", "amount": 24990 }
+
+### 2. Saját rendelés lekérdezése → 200
+GET http://localhost:3002/orders/{{order.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### 3. Token nélkül → 401
+POST http://localhost:3002/orders
+Content-Type: application/json
+
+{ "item": "Kávéfőző", "amount": 24990 }
+
+### 4. Hibás adatok → 400
+POST http://localhost:3002/orders
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+
+{ "item": "", "amount": 0 }
+
+
+### IDOR-teszt
+
+### C. Reg
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{ "email": "monthy@gmail.com", "name": "Monthy", "password": "secret123" }
+
+### D. Login
+# @name loginBela
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{ "email": "monthy@gmail.com", "password": "secret123" }
+
+### 5. monthy -> GET elek order -> 404
+GET http://localhost:3002/orders/{{order.response.body.id}}
+Authorization: Bearer {{loginBela.response.body.accessToken}}
