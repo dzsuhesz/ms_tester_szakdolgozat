@@ -1,0 +1,64 @@
+### User Service, 3001
+
+### A. Reg
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{ "email": "elek@gmail.com", "name": "Teszt Elek", "password": "secret123" }
+
+### B. Login
+# @name login
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{ "email": "elek@gmail.com", "password": "secret123" }
+
+
+### Payment Service, 3003
+
+### 1. Sikeres fizetés → 201, APPROVED
+POST http://localhost:3003/payments
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+Idempotency-Key: kulcs-1
+
+{ "orderId": "order-1", "amount": 24990 }
+
+### 2. még egyszer → 201, ua. az id, nincs új terhelés
+POST http://localhost:3003/payments
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+Idempotency-Key: kulcs-1
+
+{ "orderId": "order-1", "amount": 24990 }
+
+### 3. ua a kulcs, más összeg → 422
+POST http://localhost:3003/payments
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+Idempotency-Key: kulcs-1
+
+{ "orderId": "order-1", "amount": 1 }
+
+### 4. Kulcs nélkül → 400
+POST http://localhost:3003/payments
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+
+{ "orderId": "order-1", "amount": 24990 }
+
+### 5. Nincs fedezet → 201, DECLINED
+POST http://localhost:3003/payments
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+Idempotency-Key: kulcs-2
+
+{ "orderId": "order-2", "amount": 150000 }
+
+### 6. A bank leáll → 502
+POST http://localhost:3003/payments
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+Idempotency-Key: kulcs-3
+
+{ "orderId": "order-3", "amount": 99999 }
